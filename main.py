@@ -1,12 +1,20 @@
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from intentObject import Intent
+import casbin
 
 
-app = FastAPI()
+# Creating the Casbin enforcer based on model.conf and policy.csv
+e = casbin.Enforcer("model.conf", "policy.csv")
 
 
 # Now we write a function to check if the intent matches a policy
-# once this is done, we change this to using Casbin instead
+# using Casbin
+def check_intent(intent: Intent):
+    return e.enforce(intent.subject, intent.object, intent.action)
+
+
+# Start running the application
+app = FastAPI()
 
 
 @app.get("/")
@@ -16,5 +24,6 @@ async def welcome():
 
 @app.post("/check")
 async def receive_intent(intent: Intent):
-    return {"intended action": intent.action}
+    result = check_intent(intent)
+    return {"intent is valid?": result}
 
