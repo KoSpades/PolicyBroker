@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Security, Depends, status
 from intentObject import Intent
 import casbin
 from datetime import datetime, timedelta
@@ -27,8 +27,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
-    scopes={"fileA": "Trying to access fileA",
-            "read": "Perform the read action"},
 )
 
 
@@ -52,8 +50,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 # Now we define a function that reads file content,
 # given a valid access token
-async def get_file_content():
-    return "hello"
+async def get_file_content(
+    # security_scopes: SecurityScopes,
+    token: str = Depends(oauth2_scheme)
+):
+    return token
 
 
 # Start running the application
