@@ -21,7 +21,7 @@ e = casbin.Enforcer("model.conf", "policy.csv")
 
 SECRET_KEY = "550fc6cbe5ed4d64cc6944dfb222596dc899b8adddc9c611839f31a56c35a7d5"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 3
 
 # We now create the oauth2_Scheme.
 # Note that currently there are two scopes: "fileA" and "read"
@@ -29,7 +29,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
     scopes={"fileA": "Trying to access file A.",
-            "read": "Performing the read action."},
+            "read": "Performing the read action.",
+            "write": "Performing the write action"},
 )
 
 
@@ -115,10 +116,19 @@ async def receive_intent(intent: Intent):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# After clients successfully create the token, they will use the following GET method
-@app.get("/fileA")
+# After clients successfully create the token,
+# they will use the following method to READ fileA.
+@app.get("/fileA/read")
 async def read_file_A(file_content: str = Security(get_file_content, scopes=["fileA", "read"])):
     return {"file_content": file_content}
+
+
+# After clients successfully create the token,
+# they will use the following method to WRITE fileA.
+# Note that this should fail, because no valid policies allow write to fileA.
+@app.get("/fileA/write")
+async def write_file_A(file_content: str = Security(get_file_content, scopes=["fileA", "write"])):
+    return {"There is an error": "sad face"}
 
 
 
