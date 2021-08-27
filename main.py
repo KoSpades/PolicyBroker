@@ -21,7 +21,7 @@ e = casbin.Enforcer("model.conf", "policy.csv")
 
 SECRET_KEY = "550fc6cbe5ed4d64cc6944dfb222596dc899b8adddc9c611839f31a56c35a7d5"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 3
+ACCESS_TOKEN_EXPIRE_MINUTES = 10
 
 # We now create the oauth2_Scheme.
 # Note that currently there are two scopes: "fileA" and "read"
@@ -32,6 +32,9 @@ oauth2_scheme = OAuth2PasswordBearer(
             "read": "Performing the read action.",
             "write": "Performing the write action"},
 )
+
+# Here we initialize fileA, just as a local variable
+fileA = "this is file A LOL"
 
 
 # Now we write a function to check if the intent matches a policy
@@ -120,7 +123,7 @@ async def receive_intent(intent: Intent):
 # they will use the following method to READ fileA.
 @app.get("/fileA/read")
 async def read_file_A(file_content: str = Security(get_file_content, scopes=["fileA", "read"])):
-    return {"file_content": file_content}
+    return {"file_content": fileA}
 
 
 # After clients successfully create the token,
