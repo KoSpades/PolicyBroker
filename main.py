@@ -22,7 +22,7 @@ e = casbin.Enforcer("model.conf", "policy.csv")
 
 SECRET_KEY = "550fc6cbe5ed4d64cc6944dfb222596dc899b8adddc9c611839f31a56c35a7d5"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 10
+ACCESS_TOKEN_EXPIRE_MINUTES = 2
 
 # We now create the oauth2_Scheme.
 # Note that currently there are two scopes: "fileA" and "read"
@@ -34,7 +34,7 @@ oauth2_scheme = OAuth2PasswordBearer(
             "write": "Performing the write action"},
 )
 
-# Here we initialize fileA, just as a local variable
+# Here we initialize fileA, just as a global variable
 fileA_path = "fileA.txt"
 
 
@@ -59,17 +59,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 # Now we define a function that reads file content,
 # given a valid access token
 async def get_file_content(
-    security_scopes: SecurityScopes,
-    token: str = Depends(oauth2_scheme)
+    file: str,
+    action: str,
+    token: str = Depends(oauth2_scheme),
 ):
-    if security_scopes.scopes:
-        authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
-    else:
-        authenticate_value = f"Bearer"
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": authenticate_value},
+        headers={"WWW-Authenticate": f"Bearer"},
     )
     # In the following try-except block we verify the token validity
     try:
@@ -80,17 +77,17 @@ async def get_file_content(
         token_scopes = payload.get("scopes", [])
     except (JWTError, ValidationError):
         raise credentials_exception
-    # In the folloiwng loop we verify all the scopes are satisfied
-    for scope in security_scopes.scopes:
-        if scope not in token_scopes:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not enough permissions",
-                headers={"WWW-Authenticate": authenticate_value},
-            )
+    # In the following blocks we verify all the scopes are satisfied
+    if file not in token_scopes or action not in token_scopes:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not enough permissions",
+            headers={"WWW-Authenticate": f"Bearer"},
+        )
     # If at this stage we still have not raised an exception, then everything is good
-    # And we can return fileA's content
-    return "all passed"
+    # And we can return whatever needs to be returned
+    return_file_path = file + ".txt"
+    return return_file_path
 
 
 # Start running the application
@@ -121,18 +118,13 @@ async def receive_intent(intent: Intent):
 
 
 # After clients successfully create the token,
-# they will use the following method to READ fileA.
-@app.get("/fileA/read")
-async def read_file_A(file_content: str = Security(get_file_content, scopes=["fileA", "read"])):
-    return FileResponse(fileA_path)
+# they will use the following method to access any files, either through read or write.
+@app.get("/resource")
+async def access_file(file_path: str = Depends(get_file_content)):
+    return FileResponse(file_path)
 
 
-# After clients successfully create the token,
-# they will use the following method to WRITE fileA.
-# Note that this should fail, because no valid policies allow write to fileA.
-@app.get("/fileA/write")
-async def write_file_A(file_content: str = Security(get_file_content, scopes=["fileA", "write"])):
-    return {"There is an error": "sad face"}
+
 
 
 
