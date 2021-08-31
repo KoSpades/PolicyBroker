@@ -44,6 +44,14 @@ def check_intent(intent: Intent):
     return e.enforce(intent.subject, intent.object, intent.action)
 
 
+# We write a function to log the attempted access
+def log_intent(intent: Intent):
+    f = open("access_log.txt", "a")
+    content = intent.subject + " " + intent.object + " " + intent.action
+    f.write(content)
+    f.close()
+
+
 # Now we define a function that generates the access token
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -103,7 +111,10 @@ async def welcome():
 # Clients post to this URL to create the access token
 @app.post("/token")
 async def receive_intent(intent: Intent):
+    # First we run the check in Casbin
     result = check_intent(intent)
+    # Then we log this attempted access
+    log_intent(intent)
     # Now result stores the result of the Casbin check.
     # If it passes, we should now generate a token
     if not result:
