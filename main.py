@@ -47,7 +47,7 @@ def check_intent(intent: Intent):
 # We write a function to log the attempted access
 def log_intent(intent: Intent):
     f = open("access_log.txt", "a")
-    content = intent.subject + " " + intent.object + " " + intent.action
+    content = intent.subject + " " + intent.object + " " + intent.action + "\n"
     f.write(content)
     f.close()
 
