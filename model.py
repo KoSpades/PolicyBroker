@@ -11,4 +11,9 @@ class Dataset(BaseModel):
     object: str
 
 
+class UpdatePolicies(BaseModel):
+    old_policy: Intent
+    new_policy: Intent
+
+
 

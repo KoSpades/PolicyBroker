@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Security, Depends, status
-from model import Intent, Dataset
+from model import Intent, Dataset, UpdatePolicies
 import casbin
 from datetime import datetime, timedelta
 from typing import Optional
@@ -160,12 +160,13 @@ async def read_policy(dataset: Dataset):
 
 # Handles policy updates
 @app.put("/policy/")
-async def update_policy(policies: dict):
-    p_old = policies["old_policy"]
-    p_new = policies["new_policy"]
-    e.remove_policy(p_old["subject"], p_old["object"], p_old["action"])
-    e.add_policy(p_new["subject"], p_new["object"], p_new["action"])
-    e.save_policy()
+async def update_policy(policies: UpdatePolicies):
+    p_old = policies.old_policy
+    p_new = policies.new_policy
+    if e.remove_policy(p_old.subject, p_old.object, p_old.action):
+        e.add_policy(p_new.subject, p_new.object, p_new.action)
+        e.save_policy()
+
 
 
 

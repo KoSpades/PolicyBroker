@@ -15,3 +15,5 @@ programB fileA read
 programB fileA read
 programB fileA read
 programA fileA read
+programA fileA read
+programB fileA read
