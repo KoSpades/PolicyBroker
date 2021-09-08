@@ -151,11 +151,22 @@ async def delete_policy(intent: Intent):
     e.save_policy()
 
 
-# Handles reading policies wtih respect to a dataset
+# Handles reading policies with respect to a dataset
 @app.get("/policy/")
 async def read_policy(dataset: Dataset):
     policies = e.get_filtered_policy(1, dataset.object)
     return {"file": policies}
+
+
+# Handles policy updates
+@app.put("/policy/")
+async def update_policy(policies: dict):
+    p_old = policies["old_policy"]
+    p_new = policies["new_policy"]
+    e.remove_policy(p_old["subject"], p_old["object"], p_old["action"])
+    e.add_policy(p_new["subject"], p_new["object"], p_new["action"])
+    e.save_policy()
+
 
 
 
