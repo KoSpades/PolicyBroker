@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Security, Depends, status
-from intentObject import Intent
+from model import Intent, Dataset
 import casbin
 from datetime import datetime, timedelta
 from typing import Optional
@@ -133,6 +133,33 @@ async def receive_intent(intent: Intent):
 @app.get("/resource")
 async def access_file(file_path: str = Depends(get_file_content)):
     return FileResponse(file_path)
+
+
+# STARTING BELOW: path operation functions deal with functionalities of the data manager
+
+# Handles the creation of a policy
+@app.post("/policy/")
+async def create_policy(intent: Intent):
+    e.add_policy(intent.subject, intent.object, intent.action)
+    e.save_policy()
+
+
+# Handles the deletion of a policy
+@app.delete("/policy/")
+async def delete_policy(intent: Intent):
+    e.remove_policy(intent.subject, intent.object, intent.action)
+    e.save_policy()
+
+
+# Handles reading policies wtih respect to a dataset
+@app.get("/policy/")
+async def read_policy(dataset: Dataset):
+    policies = e.get_filtered_policy(1, dataset.object)
+    return {"file": policies}
+
+
+
+
 
 
 
